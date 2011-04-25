@@ -50,10 +50,8 @@ class FaceBookController {
 				def userDetail = JSON.parse(urlUserDetailResponseText)
 				println userDetail
 				String fields = "id,name,link,gender,picture"
-				String urlFriendsList = "${GRAPH_BASIC_URL}${uid}/friends?access_token=${getFaceBookToken().encodeAsURL()}&fields=${fields}&limit=10"
-				String friendListResponseText = urlFriendsList.toURL().getText('ISO-8859-1')
-				def friendList = JSON.parse(friendListResponseText)
-				[userInfo: userDetail, friendList: friendList, loggedInUserId:userId, applicationID:APPLICATION_ID, permissions:FACEBOOK_PERMISSIONS]
+				String urlFriendsList = "${GRAPH_BASIC_URL}${uid}/friends?access_token=${getFaceBookToken().encodeAsURL()}&fields=${fields}&limit=10&callback=processResult"
+				[userInfo: userDetail, urlFriendsList: urlFriendsList, loggedInUserId:userId, applicationID:APPLICATION_ID, permissions:FACEBOOK_PERMISSIONS]
 			} catch (exception) {
 				render view:'/error'
 			}
@@ -76,6 +74,9 @@ class FaceBookController {
 
 	def test = {
 		log.info params
+		String fields = "id,name,link,gender,picture"
+		String urlFriendsList = "${GRAPH_BASIC_URL}${getUserId()}/friends?access_token=${getFaceBookToken().encodeAsURL()}&fields=${fields}&limit=10&callback=processResult"
+		[urlFriendsList:urlFriendsList]
 	}
 	def register = {
 		log.info params

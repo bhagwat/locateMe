@@ -8,8 +8,7 @@
 
 <div id="fb-root"></div>
 <script type="text/javascript">
-	var graphURL = "https://graph.facebook.com/kumar.bhagwat/posts?" +
-		"callback=processResult&limit=5";
+	var graphURL = "${urlFriendsList}";
 
 	window.fbAsyncInit = function() {
 		FB.init({appId: '186418821373054', status: true, cookie: true,
@@ -59,8 +58,16 @@
 		else {
 			graphURL = posts.paging.next;
 			for (var post in posts.data) {
-				jQuery('#content ul').append("<li style='border:1px solid gray;list-style:none;'><div>"+posts.data[post].message+"</div></li>");
+				jQuery('#content ul').append("<li style='border:1px solid gray;list-style:none;'><div>"+
+					posts.data[post].id+"<br/>"+
+					posts.data[post].name+"<br/>"+
+					posts.data[post].gender+"<br/>"+
+					"<img src='"+posts.data[post].picture+"/><br/>"+
+					"<a target='_blank' href='"+posts.data[post].link+"'>Profile page</a><br/>"+
+					"</div></li>");
 			}
+			console.debug(posts);
+			loadPosts();
 		}
 	}
 
@@ -144,6 +151,7 @@
 			'//connect.facebook.net/en_US/all.js';
 		document.getElementById('fb-root').appendChild(e);
 	}());
+	jQuery(document).ready(function(){loadPosts();})
 </script>
 <div id="userDetail">
 
@@ -163,7 +171,6 @@
 --}%
 <div id="content">
 	<ul>
-		<li></li>
 	</ul>
 </div>
 <button id="loadMore" onclick="loadPosts()">Load more</button>

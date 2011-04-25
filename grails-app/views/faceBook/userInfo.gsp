@@ -8,6 +8,8 @@
 	<script type="text/javascript">
 		var googleMap;
 		var geoCoder;
+		var graphURL = "${urlFriendsList}";
+		var friendCount=0;
 		function initializeMap() {
 			var myLatlng = new google.maps.LatLng(-34.397, 150.644);
 			var myOptions = {
@@ -56,15 +58,44 @@
 			infoWindow.open(map, marker);
 		}
 
+		window.fbAsyncInit = function() {
+			FB.init({appId: ${applicationID}, status: true, cookie: true,xfbml: true});
+		};
 		jQuery(document).ready(function() {
 			initializeMap();
 			var e = document.createElement('script');
 			e.async = true;
 			e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
 			document.getElementById('fb-root').appendChild(e);
+			loadPosts();
 		});
 
-		window.fbAsyncInit = function() {FB.init({appId: ${applicationID}, status: true, cookie: true,xfbml: true});};
+
+		function friendTd(friendId, friendName, friendGender, friendLink, friendPicture) {
+			return	 "<tr style='width:40%'><td><a href='${grailsApplication.config.grails.serverURL}/faceBook/userInfo/" + friendId + "'>" + friendName + "</a></td><td>" + friendGender + "</td><td><a href='" + friendLink + "'><img src='" + friendPicture + "' alt='" + friendName + " Picture'/></a></td></tr>";
+
+		}
+		function loadPosts() {
+			var script = document.createElement("script");
+			script.src = graphURL;
+			document.body.appendChild(script);
+		}
+
+		function processResult(posts) {
+			console.debug(posts)
+			if (!posts.paging || posts.paging == undefined) {
+				jQuery("#friend-count").html("<strong>Displaying total "+friendCount+" friend(s).</strong>")
+			}
+			else {
+				graphURL = posts.paging.next;
+				for (var post in posts.data) {
+					friendCount++;
+					var friend = posts.data[post];
+					jQuery('#friendList').append(friendTd(friend.id, friend.name, friend.gender, friend.link, friend.picture));
+				}
+				loadPosts();
+			}
+		}
 
 	</script>
 </head>
@@ -82,11 +113,12 @@
 	</tr>
 	<tr>
 		<td>
-			<div id="map_canvas" style="width: 700px; height: 450px;"></div>
+			<div id="map_canvas" style="width: 650px; height: 410px;"></div>
 		</td>
 		<td>
-			<div>
-				<table cellpadding="1" cellspacing="1">
+			<div id="friend-count"></div>
+			<div style="width: 550px; height: 400px;overflow:auto;">
+				<table id="friendList" cellpadding="1" cellspacing="1">
 					<thead>
 					<tr style="width:60%;">
 						<th>Name</th>
@@ -94,58 +126,45 @@
 						<th>picture</th>
 					</tr>
 					</thead>
-					<g:if test="${friendList?.data}">
-						<g:each in="${friendList.data}" var="friend">
-							<tr style="width:40%">
-								<td><a href="${createLink(action: 'userInfo', id: friend.id)}">${friend.name}</a></td>
-								<td>${friend.gender}</td>
-								<td><a hre="${friend.link}"><img src="${friend.picture}" alt="${friend.name} Picture"/></a></td>
-							</tr>
-						</g:each>
-					</g:if>
-					<g:else>
-						<tr><td colspan="3"><div>Unable to get friend list</div></td></tr>
-					</g:else>
-					<g:if test="${userInfo}">
-						<tr><td colspan="3">
-							<div id="userDetail" class="dialog" style="display:none">
-								<table border="none">
-									<tr>
-										<td colspan="2" valign="center" align="center">
-											<a target="_blank" href="${userInfo.link}">
-												<strong>${userInfo.name}</strong>
-												<img alt="${userInfo.name}" src="http://graph.facebook.com/${userInfo.username}/picture"/>
-											</a>
-										</td>
-									</tr>
-									<tr>
-										<td>Gender</td>
-										<td>${userInfo.gender}</td>
-									</tr>
-									<tr>
-										<td>Birth Date</td>
-										<td>${userInfo.birthday}</td>
-									</tr>
-									<tr>
-										<td>Home Town</td>
-										<td>${userInfo.hometown?.name}</td>
-									</tr>
-									<tr>
-										<td>Current Location</td>
-										<td>${userInfo.location?.name}</td>
-									</tr>
-									<tr>
-										<td>Website</td>
-										<td><a target="_blank" href="${userInfo.website}">${userInfo.website}</a></td>
-									</tr>
-								</table>
-							</div>
-						</td></tr>
-					</g:if>
 				</table>
 			</div>
 		</td>
 	</tr>
 </table>
+<g:if test="${userInfo}">
+	<div id="userDetail" class="dialog" style="display:none">
+		<table border="none">
+			<tr>
+				<td colspan="2" valign="center" align="center">
+					<a target="_blank" href="${userInfo.link}">
+						<strong>${userInfo.name}</strong>
+						<img alt="${userInfo.name}" src="http://graph.facebook.com/${userInfo.username}/picture"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td>Gender</td>
+				<td>${userInfo.gender}</td>
+			</tr>
+			<tr>
+				<td>Birth Date</td>
+				<td>${userInfo.birthday}</td>
+			</tr>
+			<tr>
+				<td>Home Town</td>
+				<td>${userInfo.hometown?.name}</td>
+			</tr>
+			<tr>
+				<td>Current Location</td>
+				<td>${userInfo.location?.name}</td>
+			</tr>
+			<tr>
+				<td>Website</td>
+				<td><a target="_blank" href="${userInfo.website}">${userInfo.website}</a></td>
+			</tr>
+		</table>
+	</div>
+</g:if>
+
 </body>
 </html>

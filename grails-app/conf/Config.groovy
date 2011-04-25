@@ -51,7 +51,7 @@ grails.spring.bean.packages = []
 // set per-environment serverURL stem for creating absolute links
 environments {
     production {
-        grails.serverURL = "http://bhagwat-kumar.appspot.com"
+        grails.serverURL = "http://facebook-google-map.appspot.com"
     }
     development {
         grails.serverURL = "http://facebook-google-map.appspot.com"
