@@ -1,0 +1,14 @@
+*.iml
+*.ipr
+*.iws
+target/
+grails-app/views/pdf/
+.idea
+web-app/js/prototype
+web-app/data
+logs/
+out/
+stacktrace.log
+.classpath
+.project
+.settings/

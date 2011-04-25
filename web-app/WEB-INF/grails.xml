@@ -1,0 +1,24 @@
+<grails>
+  <resources>
+    <resource>org.grails.appengine.AppEngineReloadController</resource>
+    <resource>JQueryPluginResources</resource>
+    <resource>JQueryConfig</resource>
+    <resource>JQueryService</resource>
+    <resource>JQueryResourceTagLib</resource>
+    <resource>JQueryTagLib</resource>
+    <resource>DataSource</resource>
+    <resource>UrlMappings</resource>
+    <resource>Config</resource>
+    <resource>resources</resource>
+    <resource>BuildConfig</resource>
+    <resource>BootStrap</resource>
+    <resource>ApplicationFilters</resource>
+    <resource>com.intelligrape.locateMe.domain.FaceBookUser</resource>
+    <resource>com.intelligrape.locateMe.controller.FaceBookUserController</resource>
+    <resource>com.intelligrape.locateMe.controller.FaceBookController</resource>
+  </resources>
+  <plugins>
+    <plugin>AppEngineGrailsPlugin</plugin>
+    <plugin>JqueryGrailsPlugin</plugin>
+  </plugins>
+</grails>
