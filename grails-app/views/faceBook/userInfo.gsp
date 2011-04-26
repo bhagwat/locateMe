@@ -58,21 +58,61 @@
 			infoWindow.open(map, marker);
 		}
 
-		window.fbAsyncInit = function() {
-			FB.init({appId: ${applicationID}, status: true, cookie: true,xfbml: true});
-		};
+	window.fbAsyncInit = function() {
+		FB.init({appId: ${applicationID}, status: true, cookie: true,
+			xfbml: true});
+		FB.api(
+		{
+			method: 'fql.query',
+			query: 'SELECT uid, name,sex, pic_square, birthday, hometown_location, current_location,online_presence FROM user WHERE uid = me() OR uid IN (SELECT uid2 FROM friend WHERE uid1 = me())'
+		},
+			function(response) {
+				var friendDetails=response;
+				var friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture;
+				jQuery.each(friendDetails, function(k,v){
+					friendId=v.uid;
+					friendName=v.name;
+					friendGender=v.sex;
+					friendBirthday=v.birthday;
+					hometown="";
+					if(v.hometown_location){
+						hometown=v.hometown_location.name//+", "+v.hometown_location.state+", "+v.hometown_location.country
+					}
+					currentLocation="";
+					if(v.current_location){
+						currentLocation=v.current_location.name//+", "+v.current_location.state+", "+v.current_location.country
+					}
+					friendLink="";
+					friendPicture=v.pic_square;
+					friendOnline=v.online_presence|'';
+					jQuery('#friendList').append(friendTdFbApi(friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture,friendOnline));
+				});
+			})
+	};
 		jQuery(document).ready(function() {
 			initializeMap();
 			var e = document.createElement('script');
 			e.async = true;
 			e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
 			document.getElementById('fb-root').appendChild(e);
-			loadPosts();
+			//loadPosts();
 		});
 
 
 		function friendTd(friendId, friendName, friendGender, friendLink, friendPicture) {
 			return	 "<tr style='width:40%'><td><a href='${grailsApplication.config.grails.serverURL}/faceBook/userInfo/" + friendId + "'>" + friendName + "</a></td><td>" + friendGender + "</td><td><a href='" + friendLink + "'><img src='" + friendPicture + "' alt='" + friendName + " Picture'/></a></td></tr>";
+
+		}
+		function friendTdFbApi(friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline) {
+			return	 "<tr style='width:40%'>"+
+				"<td><a href='${grailsApplication.config.grails.serverURL}/faceBook/userInfo/" + friendId + "'>" + friendName + "</a></td>"+
+				"<td>" + friendGender + "</td>"+
+				"<td>" + friendBirthday + "</td>"+
+				"<td>" + hometown + "</td>"+
+				"<td>" + currentLocation + "</td>"+
+				"<td>" + friendOnline + "</td>"+
+				"<td><a href='" + friendLink + "'><img src='" + friendPicture + "' alt='" + friendName + " Picture'/></a></td>"+
+				"</tr>";
 
 		}
 		function loadPosts() {
@@ -122,6 +162,10 @@
 					<tr style="width:60%;">
 						<th>Name</th>
 						<th>Gender</th>
+						<th>Birthday</th>
+						<th>Hometown</th>
+						<th>Current Location</th>
+						<th>Online Status</th>
 						<th>picture</th>
 					</tr>
 					</thead>
