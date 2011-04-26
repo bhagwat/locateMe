@@ -82,7 +82,6 @@
 		}
 
 		function processResult(posts) {
-			console.debug(posts)
 			if (!posts.paging || posts.paging == undefined) {
 				jQuery("#friend-count").html("<strong>Displaying total "+friendCount+" friend(s).</strong>")
 			}
