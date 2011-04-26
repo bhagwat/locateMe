@@ -84,7 +84,7 @@
 					}
 					friendLink="";
 					friendPicture=v.pic_square;
-					friendOnline=v.online_presence|'';
+					friendOnline=v.online_presence||'';
 					jQuery('#friendList').append(friendTdFbApi(friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture,friendOnline));
 				});
 			})
@@ -111,7 +111,7 @@
 				"<td>" + hometown + "</td>"+
 				"<td>" + currentLocation + "</td>"+
 				"<td>" + friendOnline + "</td>"+
-				"<td><a href='" + friendLink + "'><img src='" + friendPicture + "' alt='" + friendName + " Picture'/></a></td>"+
+				"<td><a href='${grailsApplication.config.grails.serverURL}/faceBook/userInfo/" + friendId + "'><img src='" + friendPicture + "' alt='" + friendName + " Picture'/></a></td>"+
 				"</tr>";
 
 		}
@@ -152,11 +152,11 @@
 	</tr>
 	<tr>
 		<td>
-			<div id="map_canvas" style="width: 650px; height: 410px;"></div>
+			<div id="map_canvas" style="width: 600px; height: 410px;"></div>
 		</td>
 		<td>
 			<div id="friend-count"></div>
-			<div style="width: 550px; height: 400px;overflow:auto;">
+			<div style="width: 600px; height: 400px;overflow:auto;">
 				<table id="friendList" cellpadding="1" cellspacing="1">
 					<thead>
 					<tr style="width:60%;">
