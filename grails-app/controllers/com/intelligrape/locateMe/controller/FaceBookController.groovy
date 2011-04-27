@@ -51,7 +51,7 @@ class FaceBookController {
 				println userDetail
 				String fields = "id,name,link,gender,picture, home_town"
 				String urlFriendsList = "${GRAPH_BASIC_URL}${uid}/friends?access_token=${getFaceBookToken().encodeAsURL()}&fields=${fields}&limit=10&callback=processResult"
-				[urlUserDetail:urlUserDetail, userInfo: userDetail, urlFriendsList: urlFriendsList, loggedInUserId:userId, applicationID:APPLICATION_ID, permissions:FACEBOOK_PERMISSIONS]
+				[urlUserDetail:urlUserDetail, userInfo: userDetail, urlFriendsList: urlFriendsList, loggedInUserId:userId, currentUserId:uid, applicationID:APPLICATION_ID, permissions:FACEBOOK_PERMISSIONS]
 			} catch (exception) {
 				render view:'/error'
 			}

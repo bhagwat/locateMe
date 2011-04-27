@@ -63,11 +63,15 @@
 			xfbml: true});
 		FB.api(
 		{
-			method: 'fql.query',
-			query: 'SELECT uid, name,sex, pic_square, birthday, hometown_location, current_location,online_presence FROM user WHERE uid = ${loggedInUserIdWelcome} OR uid IN (SELECT uid2 FROM friend WHERE uid1 =${loggedInUserIdWelcome}) 
+			method: "fql.query",
+			query: "SELECT uid, name,sex, pic_square, birthday, hometown_location, current_location,online_presence FROM user WHERE uid = ${currentUserId} OR uid IN (SELECT uid2 FROM friend WHERE uid1 =${currentUserId})"
 		},
 			function(response) {
 				var friendDetails=response;
+				if(response.error_msg){
+					jQuery('#friendList').append("<tr><td colspan='7'><strong>"+response.error_msg+"</strong></td></tr>");
+					return;
+				}
 				var friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture;
 				jQuery.each(friendDetails, function(k,v){
 					friendId=v.uid;
@@ -139,7 +143,7 @@
 	</script>
 </head>
 <body style="margin:5px;">
-<h2><a href="${createLink(action: 'userInfo', id: loggedInUserIdWelcome)}">${userInfo.name}(Go Back to Home)</a></h2>
+<h2><a href="${createLink(action: 'userInfo', id: loggedInUserId)}">${userInfo.name}(Go Back to Home)</a></h2>
 <div id="fb-root" style="display:none"></div>
 <div id="login-flow">
 	<fb:login-button perms="${permissions}" show-faces="true"></fb:login-button>
