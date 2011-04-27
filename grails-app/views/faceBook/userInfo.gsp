@@ -17,7 +17,7 @@
 			document.getElementById('fb-root').appendChild(e);
 		});
 	</script>
-	<g:javascript src="findme.facebook.js"/>
+	<g:javascript src="findme.facebook-2.js"/>
 </head>
 <body style="margin:5px;">
 
@@ -27,8 +27,19 @@
 </div>
 <table>
 	<tr>
-		<td colspan="2">
-			<h2><a href="${createLink(action: 'userInfo', id: loggedInUserId)}">${userInfo.name}(<g:message code="go.back.to.home" default="Go Back to Home"/>)</a></h2>
+		<td>
+			<h2>
+				<a href="${createLink(action: 'userInfo', id: loggedInUserId)}">
+					${userInfo.name}
+					(<g:message code="go.back.to.home" default="Go Back to Home"/>)
+				</a>
+			</h2>
+		</td>
+		<td>
+			<div class="navigation">
+					<a href="javascript:;" onclick="showFriendsOnMapByHomeLocation();"><g:message code="show.by.home.location" default="Show by home location"/></a>
+					<a href="javascript:;" onclick="showFriendsOnMapByCurrentLocation();"><g:message code="show.by.current.location" default="Show by current location"/></a>
+			</div>
 		</td>
 	</tr>
 	<tr>
@@ -41,13 +52,13 @@
 				<table id="friendList" cellpadding="1" cellspacing="1">
 					<thead>
 					<tr style="width:60%;">
-						<th>Name</th>
-						<th>Gender</th>
-						<th>Birthday</th>
-						<th>Hometown</th>
-						<th>Current Location</th>
-						<th>Online Status</th>
-						<th>picture</th>
+						<th><g:message code="user.name" default="Name"/></th>
+						<th><g:message code="user.gender" default="Gender"/></th>
+						<th><g:message code="user.birthday" default="Birthday"/></th>
+						<th><g:message code="user.hometown" default="Hometown"/></th>
+						<th><g:message code="user.current.location" default="Current Location"/></th>
+						<th><g:message code="user.online" default="Online"/></th>
+						<th><g:message code="user.picture" default="Picture"/></th>
 					</tr>
 					</thead>
 				</table>

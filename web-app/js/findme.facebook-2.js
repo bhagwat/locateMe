@@ -3,11 +3,19 @@ var geoCoder;
 var applicationID;
 var currentUserId;
 var regionWiseUsers = new Object();
+var friendList;
+var mapMarkerAndInfoWindows = new Array();
+function clearMap() {
+		jQuery(mapMarkerAndInfoWindows).each(function() {
+				if (this.marker) this.marker.setMap(null);
+				if (this.infoWindow) this.infoWindow = null;
+		})
+		mapMarkerAndInfoWindows = new Array();
+}
 function getRegionString(address) {
 		return address ? address.city + " " + address.state + " " + address.country : 'No address';
 }
-function addToState(userItem) {
-		var regionString = getRegionString(userItem.hometown_location);
+function addToState(userItem, regionString) {
 		if (!regionWiseUsers[regionString]) {
 				regionWiseUsers[regionString] = new Object();
 				regionWiseUsers[regionString].name = regionString;
@@ -16,6 +24,7 @@ function addToState(userItem) {
 		regionWiseUsers[regionString].users.push(userItem);
 }
 function addUserDetailToTable(userItem) {
+		var friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture,friendOnline;
 		friendId = userItem.uid;
 		friendName = userItem.name;
 		friendGender = userItem.sex;
@@ -24,7 +33,7 @@ function addUserDetailToTable(userItem) {
 		currentLocation = getRegionString(userItem.current_location);
 		friendLink = "";
 		friendPicture = userItem.pic_square;
-		friendOnline = userItem.online_presence || '';
+		friendOnline = userItem.online_presence ? userItem.online_presence : '';
 		jQuery('#friendList').append(friendTdFbApi(friendId, friendName, friendGender, friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline));
 }
 function getHeaderHtml(text) {
@@ -59,26 +68,47 @@ window.fbAsyncInit = function() {
 						if (response.error_msg) {
 								jQuery('#friendList').append(getHeaderHtml(response.error_msg));
 								return;
-						}
-						var friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture;
-						jQuery(response).each(function() {
-								addToState(this)
-						});
-						for (var index in regionWiseUsers) {
-								jQuery('#friendList').append(getRegionHeaderHtml(regionWiseUsers[index]));
-								var popupHtml = "<div style='height:210px; width:200px'><h3>" + regionWiseUsers[index].name + "</h3><br/><ul>";
-								jQuery(regionWiseUsers[index].users).each(function(key, userItem) {
-										addUserDetailToTable(userItem)
-										popupHtml += "<li style='list-style:none;'>" +
-												"<a href='" + applicationRoot + "'" + userItem.uid + "'><img src='" + userItem.pic_square + "' alt='" + userItem.name + " Picture'/></a>" + userItem.name +
-												"</li>";
-								});
-								popupHtml += "</div></ul>";
-								searchAddress(regionWiseUsers[index].name, popupHtml);
+						} else {
+								friendList = response;
+								showFriendsOnMapByHomeLocation();
 						}
 				})
 };
-
+function showFriendsOnMapByHomeLocation() {
+		if (friendList) {
+				regionWiseUsers = new Object();
+				jQuery(friendList).each(function() {
+						var regionString = getRegionString(this.hometown_location);
+						addToState(this, regionString);
+				});
+				showFriendsOnMap(regionWiseUsers);
+		}
+}
+function showFriendsOnMapByCurrentLocation() {
+		if (friendList) {
+				regionWiseUsers = new Object();
+				jQuery(friendList).each(function() {
+						var regionString = getRegionString(this.current_location);
+						addToState(this, regionString);
+				});
+				showFriendsOnMap(regionWiseUsers);
+		}
+}
+function showFriendsOnMap(regionWiseUsers) {
+		clearMap();
+		for (var index in regionWiseUsers) {
+				jQuery('#friendList').append(getRegionHeaderHtml(regionWiseUsers[index]));
+				var popupHtml = "<div style='height:210px; width:200px'><h3>" + regionWiseUsers[index].name + "</h3><br/><ul>";
+				jQuery(regionWiseUsers[index].users).each(function(key, userItem) {
+						addUserDetailToTable(userItem);
+						popupHtml += "<li style='list-style:none;'>" +
+								"<a href='" + applicationRoot + "'" + userItem.uid + "'><img src='" + userItem.pic_square + "' alt='" + userItem.name + " Picture'/></a>" + userItem.name +
+								"</li>";
+				});
+				popupHtml += "</div></ul>";
+				searchAddress(regionWiseUsers[index].name, popupHtml);
+		}
+}
 function initializeMap() {
 		var myLatlng = new google.maps.LatLng(-34.397, 150.644);
 		var myOptions = {
@@ -104,7 +134,7 @@ function createMarkerAndInfoWindowForLocation(location, content, map, icon) {
 		if (!map) {
 				map = googleMap;
 		}
-		var marker = new google.maps.Marker({map: map, position: location});
+		var marker = new google.maps.Marker({map: map, position: location, draggable:true});
 		if (icon && icon.length) {
 				marker.setIcon(icon);
 		}
@@ -116,4 +146,5 @@ function createMarkerAndInfoWindowForLocation(location, content, map, icon) {
 				infoWindow.open(map, marker);
 		});
 		googleMap.setCenter(marker.getPosition());
+		mapMarkerAndInfoWindows.push({marker:marker, infoWindow:infoWindow});
 }
