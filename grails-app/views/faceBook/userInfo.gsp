@@ -8,8 +8,75 @@
 	<script type="text/javascript">
 		var googleMap;
 		var geoCoder;
-		var graphURL = "${urlFriendsList}";
-		var friendCount=0;
+		var regionWiseUsers = new Object();
+		function getRegionString(address) {
+			return address ? address.city + " " + address.state + " " + address.country : 'No address';
+		}
+		function addToState(userItem) {
+			var regionString = getRegionString(userItem.hometown_location);
+			if (!regionWiseUsers[regionString]) {
+				regionWiseUsers[regionString] = new Object();
+				regionWiseUsers[regionString].name = regionString;
+				regionWiseUsers[regionString].users = new Array();
+			}
+			regionWiseUsers[regionString].users.push(userItem);
+		}
+		function addUserDetailToTable(userItem) {
+			friendId = userItem.uid;
+			friendName = userItem.name;
+			friendGender = userItem.sex;
+			friendBirthday = userItem.birthday;
+			hometown = getRegionString(userItem.hometown_location);
+			currentLocation = getRegionString(userItem.current_location);
+			friendLink = "";
+			friendPicture = userItem.pic_square;
+			friendOnline = userItem.online_presence || '';
+			jQuery('#friendList').append(friendTdFbApi(friendId, friendName, friendGender, friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline));
+		}
+		function getHeaderHtml(text) {
+			return "<tr><td colspan='7'><h3>" + text + "</h3></td></tr>";
+		}
+		function getRegionHeaderHtml(regionItem) {
+			return getHeaderHtml(regionItem.name + " (Total: " + regionItem.users.length + " Friends)");
+		}
+
+		function friendTdFbApi(friendId, friendName, friendGender, friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline) {
+			return	 "<tr style='width:40%'>" +
+				"<td><a href='${grailsApplication.config.grails.serverURL}/faceBook/userInfo/" + friendId + "'>" + friendName + "</a></td>" +
+				"<td>" + friendGender + "</td>" +
+				"<td>" + friendBirthday + "</td>" +
+				"<td>" + hometown + "</td>" +
+				"<td>" + currentLocation + "</td>" +
+				"<td>" + friendOnline + "</td>" +
+				"<td><a href='${grailsApplication.config.grails.serverURL}/faceBook/userInfo/" + friendId + "'><img src='" + friendPicture + "' alt='" + friendName + " Picture'/></a></td>" +
+				"</tr>";
+
+		}
+		window.fbAsyncInit = function() {
+			FB.init({appId: ${applicationID}, status: true, cookie: true,
+				xfbml: true});
+			FB.api(
+			{
+				method: "fql.query",
+				query: "SELECT uid, name,sex, pic_square, birthday, hometown_location, current_location,online_presence FROM user WHERE uid = ${currentUserId} OR uid IN (SELECT uid2 FROM friend WHERE uid1 =${currentUserId})"
+			},
+				function(response) {
+					if (response.error_msg) {
+						jQuery('#friendList').append(getHeaderHtml(response.error_msg));
+						return;
+					}
+					var friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture;
+					jQuery(response).each(function() {
+						addToState(this)
+					});
+					for (var index in regionWiseUsers) {
+						jQuery('#friendList').append(getRegionHeaderHtml(regionWiseUsers[index]));
+						jQuery(regionWiseUsers[index].users).each(function(key, userItem) {
+							addUserDetailToTable(userItem)
+						});
+					}
+				})
+		};
 		function initializeMap() {
 			var myLatlng = new google.maps.LatLng(-34.397, 150.644);
 			var myOptions = {
@@ -58,88 +125,13 @@
 			infoWindow.open(map, marker);
 		}
 
-	window.fbAsyncInit = function() {
-		FB.init({appId: ${applicationID}, status: true, cookie: true,
-			xfbml: true});
-		FB.api(
-		{
-			method: "fql.query",
-			query: "SELECT uid, name,sex, pic_square, birthday, hometown_location, current_location,online_presence FROM user WHERE uid = ${currentUserId} OR uid IN (SELECT uid2 FROM friend WHERE uid1 =${currentUserId})"
-		},
-			function(response) {
-				var friendDetails=response;
-				if(response.error_msg){
-					jQuery('#friendList').append("<tr><td colspan='7'><strong>"+response.error_msg+"</strong></td></tr>");
-					return;
-				}
-				var friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture;
-				jQuery.each(friendDetails, function(k,v){
-					friendId=v.uid;
-					friendName=v.name;
-					friendGender=v.sex;
-					friendBirthday=v.birthday;
-					hometown="";
-					if(v.hometown_location){
-						hometown=v.hometown_location.name//+", "+v.hometown_location.state+", "+v.hometown_location.country
-					}
-					currentLocation="";
-					if(v.current_location){
-						currentLocation=v.current_location.name//+", "+v.current_location.state+", "+v.current_location.country
-					}
-					friendLink="";
-					friendPicture=v.pic_square;
-					friendOnline=v.online_presence||'';
-					jQuery('#friendList').append(friendTdFbApi(friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture,friendOnline));
-				});
-			})
-	};
 		jQuery(document).ready(function() {
 			initializeMap();
 			var e = document.createElement('script');
 			e.async = true;
 			e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
 			document.getElementById('fb-root').appendChild(e);
-			//loadPosts();
 		});
-
-
-		function friendTd(friendId, friendName, friendGender, friendLink, friendPicture) {
-			return	 "<tr style='width:40%'><td><a href='${grailsApplication.config.grails.serverURL}/faceBook/userInfo/" + friendId + "'>" + friendName + "</a></td><td>" + friendGender + "</td><td><a href='" + friendLink + "'><img src='" + friendPicture + "' alt='" + friendName + " Picture'/></a></td></tr>";
-
-		}
-		function friendTdFbApi(friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline) {
-			return	 "<tr style='width:40%'>"+
-				"<td><a href='${grailsApplication.config.grails.serverURL}/faceBook/userInfo/" + friendId + "'>" + friendName + "</a></td>"+
-				"<td>" + friendGender + "</td>"+
-				"<td>" + friendBirthday + "</td>"+
-				"<td>" + hometown + "</td>"+
-				"<td>" + currentLocation + "</td>"+
-				"<td>" + friendOnline + "</td>"+
-				"<td><a href='${grailsApplication.config.grails.serverURL}/faceBook/userInfo/" + friendId + "'><img src='" + friendPicture + "' alt='" + friendName + " Picture'/></a></td>"+
-				"</tr>";
-
-		}
-		function loadPosts() {
-			var script = document.createElement("script");
-			script.src = graphURL;
-			document.body.appendChild(script);
-		}
-
-		function processResult(posts) {
-			if (!posts.paging || posts.paging == undefined) {
-				jQuery("#friend-count").html("<strong>Displaying total "+friendCount+" friend(s).</strong>")
-			}
-			else {
-				graphURL = posts.paging.next;
-				for (var post in posts.data) {
-					friendCount++;
-					var friend = posts.data[post];
-					jQuery('#friendList').append(friendTd(friend.id, friend.name, friend.gender, friend.link, friend.picture));
-				}
-				loadPosts();
-			}
-		}
-
 	</script>
 </head>
 <body style="margin:5px;">
@@ -212,6 +204,5 @@
 		</table>
 	</div>
 </g:if>
-
 </body>
 </html>
