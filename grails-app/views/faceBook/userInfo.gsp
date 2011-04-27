@@ -64,7 +64,7 @@
 		FB.api(
 		{
 			method: 'fql.query',
-			query: 'SELECT uid, name,sex, pic_square, birthday, hometown_location, current_location,online_presence FROM user WHERE uid = me() OR uid IN (SELECT uid2 FROM friend WHERE uid1 = me())'
+			query: 'SELECT uid, name,sex, pic_square, birthday, hometown_location, current_location,online_presence FROM user WHERE uid = ${loggedInUserIdWelcome} OR uid IN (SELECT uid2 FROM friend WHERE uid1 =${loggedInUserIdWelcome}) 
 		},
 			function(response) {
 				var friendDetails=response;
