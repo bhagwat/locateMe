@@ -1,5 +1,7 @@
 <grails>
   <resources>
+    <resource>DefaultGoogleMapConfig</resource>
+    <resource>org.grails.plugin.googlemap.taglib.MapTagLib</resource>
     <resource>org.grails.appengine.AppEngineReloadController</resource>
     <resource>JQueryPluginResources</resource>
     <resource>JQueryConfig</resource>
@@ -18,6 +20,7 @@
     <resource>com.intelligrape.locateMe.controller.FaceBookController</resource>
   </resources>
   <plugins>
+    <plugin>GoogleMapGrailsPlugin</plugin>
     <plugin>AppEngineGrailsPlugin</plugin>
     <plugin>JqueryGrailsPlugin</plugin>
   </plugins>

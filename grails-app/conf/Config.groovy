@@ -54,7 +54,7 @@ environments {
         grails.serverURL = "http://bhagwat-kumar.appspot.com"
     }
     development {
-        grails.serverURL = "http://facebook-google-map.appspot.com"
+        grails.serverURL = "http://bhagwat-kumar.appspot.com"
     }
     test {
         grails.serverURL = "http://bhagwat-kumar.appspot.com"
