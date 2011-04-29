@@ -33,7 +33,7 @@ function addToState(userItem, regionString) {
 		}
 		regionWiseUsers[regionString].users.push(userItem);
 }
-function addUserDetailToTable(userItem) {
+function getUserDetailListHtml(userItem) {
 		var friendId, friendName, friendGender,friendBirthday, hometown, currentLocation, friendLink, friendPicture,friendOnline;
 		friendId = userItem.uid;
 		friendName = userItem.name;
@@ -42,12 +42,13 @@ function addUserDetailToTable(userItem) {
 		hometown = getRegionString(userItem.hometown_location);
 		currentLocation = getRegionString(userItem.current_location);
 		friendLink = "";
-		friendPicture = userItem.pic_square;
+		friendPicture = userItem.pic_small;
 		friendOnline = userItem.online_presence ? userItem.online_presence : '';
-		jQuery('#friendList').append(friendTdFbApi(friendId, friendName, friendGender, friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline));
+//				jQuery('#friendList').append(friendTdFbApi(friendId, friendName, friendGender, friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline));
+		return friendTdFbApi(friendId, friendName, friendGender, friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline);
 }
 function getHeaderHtml(text) {
-		return "<tr><td colspan='7'><h3>" + text + "</h3></td></tr>";
+		return "<h3 class='head'><a href='#'>" + text + "</a></h3>";
 }
 function getRegionHeaderHtml(regionItem) {
 		return getHeaderHtml(regionItem.name + " (Total: " + regionItem.users.length + " Friends)");
@@ -55,15 +56,13 @@ function getRegionHeaderHtml(regionItem) {
 
 function friendTdFbApi(friendId, friendName, friendGender, friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline) {
 		var url = applicationRoot + friendId;
-		return	 "<tr style='width:40%'>" +
-				"<td><a href='" + url + "'>" + friendName + "</a></td>" +
-				"<td>" + friendGender + "</td>" +
-				"<td>" + friendBirthday + "</td>" +
-				"<td>" + hometown + "</td>" +
-				"<td>" + currentLocation + "</td>" +
-				"<td>" + friendOnline + "</td>" +
-				"<td><a href='" + url + "'><img src='" + friendPicture + "' alt='" + friendName + " Picture'/></a></td>" +
-				"</tr>";
+		return "<ul class='horizontal'>" +
+				"<li><a href='" + url + "'><img src='" + friendPicture + "' alt='" + friendName + " Picture'/></a></li>" +
+				"<li><a href='" + url + "'>" + friendName + "(" + friendGender + ")</a></li>" +
+				"<li>" + (friendBirthday ? friendBirthday : "-----") + "</li>" +
+				"<li>" + hometown + "</li>" +
+				"<li>" + currentLocation + "</li>" +
+				"</ul>";
 }
 window.fbAsyncInit = function() {
 		FB.init({appId: applicationID, status: true, cookie: true,
@@ -71,7 +70,7 @@ window.fbAsyncInit = function() {
 		FB.api(
 		{
 				method: "fql.query",
-				query: "SELECT uid, name,sex, pic_square, birthday, hometown_location, current_location,online_presence FROM user WHERE uid = " + currentUserId +
+				query: "SELECT uid, name,sex, pic_small, birthday, hometown_location, current_location FROM user WHERE uid = " + currentUserId +
 						" OR uid IN (SELECT uid2 FROM friend WHERE uid1 =" + currentUserId + ")"
 		},
 				function(response) {
@@ -106,18 +105,23 @@ function showFriendsOnMapByCurrentLocation() {
 }
 function showFriendsOnMap(regionWiseUsers) {
 		clearMap();
+		var divHtml = "";
 		for (var index in regionWiseUsers) {
-				jQuery('#friendList').append(getRegionHeaderHtml(regionWiseUsers[index]));
+				divHtml += getRegionHeaderHtml(regionWiseUsers[index]);
+				divHtml += "<div class='hidden'>";
 				var popupHtml = "<div style='height:210px; width:200px'><h3>" + regionWiseUsers[index].name + "</h3><br/><ul>";
 				jQuery(regionWiseUsers[index].users).each(function(key, userItem) {
-						addUserDetailToTable(userItem);
+						divHtml += getUserDetailListHtml(userItem);
 						popupHtml += "<li style='list-style:none;'>" +
-								"<a href='" + applicationRoot + "'" + userItem.uid + "'><img src='" + userItem.pic_square + "' alt='" + userItem.name + " Picture'/></a>" + userItem.name +
+								"<a href='" + applicationRoot + "'" + userItem.uid + "'><img src='" + userItem.pic_small + "' alt='" + userItem.name + " Picture'/></a>" + userItem.name +
 								"</li>";
 				});
 				popupHtml += "</div></ul>";
 				searchAddress(regionWiseUsers[index].name, popupHtml);
+				divHtml += "</div>";
 		}
+		jQuery('#friendList').empty().append(divHtml);
+		applyAccordion();
 }
 function initializeMap() {
 		var myLatlng = new google.maps.LatLng(-34.397, 150.644);
@@ -165,4 +169,14 @@ function createMarkerAndInfoWindowForLocation(location, content, map, icon) {
 //			googleMap.setCenter(marker.getPosition());
 		googleMap.fitBounds(googleMap.getBounds().extend(location));
 		mapMarkerAndInfoWindows.push({marker:marker, infoWindow:infoWindow});
+}
+function applyAccordion() {
+		$('#friendList .head').unbind('click');
+		$('#friendList .head').click(function() {
+				$(this).next().toggle('slow');
+				return false;
+		});
+}
+function updateHomeLocation(event, data) {
+		googleMap.fitBounds(data.geometry.bounds);
 }

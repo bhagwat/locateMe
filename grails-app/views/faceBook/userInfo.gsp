@@ -5,6 +5,22 @@
 	<meta name="layout" content="main"/>
 	<title><g:message code="where.are.your.friends" default="Where are your friends?"/></title>
 	<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+	<style type="text/css">
+	.horizontal li {
+		display: inline;
+		list-style-type: none;
+		padding-right: 20px;
+		line-height: 20px;
+	}
+
+	.head {
+		margin: 7px 0;
+	}
+
+	.hidden {
+		display: none;
+	}
+	</style>
 	<script type="text/javascript">
 		var applicationID = "${applicationID}";
 		var currentUserId = "${loggedInUserId}";
@@ -16,12 +32,10 @@
 			e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
 			document.getElementById('fb-root').appendChild(e);
 		});
-		geocoder = new google.maps.Geocoder();
-		function updateHomeLocation(event, data) {
-			googleMap.fitBounds(data.geometry.bounds);
-		}
+		geocoder = getGeoCoder();
+
 	</script>
-	<g:javascript src="findme.facebook-3.js"/>
+	<g:javascript src="findme.facebook-4.js"/>
 </head>
 <body style="margin:5px;">
 <div id="fb-root" style="display:none"></div>
@@ -40,8 +54,10 @@
 		</td>
 		<td>
 			<div class="navigation">
-				<a href="javascript:;" onclick="showFriendsOnMapByHomeLocation();"><g:message code="show.by.home.location" default="Show by home location"/></a>
-				<a href="javascript:;" onclick="showFriendsOnMapByCurrentLocation();"><g:message code="show.by.current.location" default="Show by current location"/></a>
+				<input type="button" onclick="showFriendsOnMapByHomeLocation();" value="${message(code: 'show.by.home.location')}"/>
+				<input type="button" onclick="showFriendsOnMapByCurrentLocation();" value="${message(code: 'show.by.current.location')}"/>
+				<input type="button" onclick="$('#friendList .head').next().hide();" value="${message(code: 'collapse.all')}"/>
+				<input type="button" onclick="$('#friendList .head').next().show();" value="${message(code: 'expand.all')}"/>
 			</div>
 		</td>
 	</tr>
@@ -59,20 +75,8 @@
 		</td>
 		<td>
 			<div id="friend-count"></div>
-			<div style="width: 600px; height: 400px;overflow:auto;">
-				<table id="friendList" cellpadding="1" cellspacing="1">
-					<thead>
-					<tr style="width:60%;">
-						<th><g:message code="user.name" default="Name"/></th>
-						<th><g:message code="user.gender" default="Gender"/></th>
-						<th><g:message code="user.birthday" default="Birthday"/></th>
-						<th><g:message code="user.hometown" default="Hometown"/></th>
-						<th><g:message code="user.current.location" default="Current Location"/></th>
-						<th><g:message code="user.online" default="Online"/></th>
-						<th><g:message code="user.picture" default="Picture"/></th>
-					</tr>
-					</thead>
-				</table>
+			<div id="friendList" style="width: 600px; height: 400px;overflow:auto;">
+
 			</div>
 		</td>
 	</tr>
