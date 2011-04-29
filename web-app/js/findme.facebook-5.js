@@ -7,12 +7,13 @@ var friendList;
 var mapMarkerAndInfoWindows = new Array();
 var noAddress = "No Address";
 var cachedAddress = new Array();
+var arrows = new Array();
 function findAddressFromCache(address) {
-		jQuery(cachedAddress).each(function() {
-				if (this.address == address) {
-						return this.position;
+		for (var k in cachedAddress) {
+				if (cachedAddress[k].address == address) {
+						return cachedAddress[k].position;
 				}
-		});
+		}
 		return null;
 }
 function clearMap() {
@@ -105,6 +106,7 @@ function showFriendsOnMapByCurrentLocation() {
 }
 function showFriendsOnMap(regionWiseUsers) {
 		clearMap();
+		removeAllLines();
 		var divHtml = "";
 		for (var index in regionWiseUsers) {
 				divHtml += getRegionHeaderHtml(regionWiseUsers[index]);
@@ -179,4 +181,32 @@ function applyAccordion() {
 }
 function updateHomeLocation(event, data) {
 		googleMap.fitBounds(data.geometry.bounds);
+}
+function removeAllLines() {
+		for (var arrow in arrows) {
+				arrows[arrow].setMap(null);
+		}
+		arrows = new Array();
+}
+function showArrow(currentUserId) {
+		removeAllLines();
+		jQuery(friendList).each(function() {
+				if (this.uid == currentUserId) {
+						var foundLocation = findAddressFromCache(getRegionString(this.hometown_location));
+						jQuery(cachedAddress).each(function() {
+								var endPosition = this.position;
+								if (endPosition != foundLocation) {
+										var linePath = new google.maps.Polyline({
+												path: [foundLocation, endPosition],
+												strokeColor: "#FF0000",
+												strokeOpacity: 1.0,
+												strokeWeight: 2
+										});
+										linePath.setMap(googleMap);
+										arrows.push(linePath);
+								}
+						})
+				}
+				return;
+		});
 }

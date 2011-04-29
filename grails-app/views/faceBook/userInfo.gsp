@@ -35,7 +35,7 @@
 		geocoder = getGeoCoder();
 
 	</script>
-	<g:javascript src="findme.facebook-4.js"/>
+	<g:javascript src="findme.facebook-5.js"/>
 </head>
 <body style="margin:5px;">
 <div id="fb-root" style="display:none"></div>
@@ -58,6 +58,7 @@
 				<input type="button" onclick="showFriendsOnMapByCurrentLocation();" value="${message(code: 'show.by.current.location')}"/>
 				<input type="button" onclick="$('#friendList .head').next().hide();" value="${message(code: 'collapse.all')}"/>
 				<input type="button" onclick="$('#friendList .head').next().show();" value="${message(code: 'expand.all')}"/>
+				<input type="button" onclick="showArrow('${currentUserId}');" value="Show Arrow connection(From Home)"/>
 			</div>
 		</td>
 	</tr>
