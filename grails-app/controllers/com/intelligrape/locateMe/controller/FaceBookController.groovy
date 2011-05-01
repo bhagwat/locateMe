@@ -75,7 +75,7 @@ class FaceBookController {
 
 	private String getUserId() {
 		String token = getFaceBookToken().tokenize("|")[1]
-		String uid = token.tokenize("-")[1]
+		String uid = token?.tokenize("-")[1]
 		return uid
 	}
 

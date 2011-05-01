@@ -5,28 +5,11 @@
 	<meta name="layout" content="main"/>
 	<title><g:message code="where.are.your.friends" default="Where are your friends?"/></title>
 	<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
-	<style type="text/css">
-	.horizontal li {
-		display: inline;
-		list-style-type: none;
-		padding-right: 20px;
-		line-height: 20px;
-	}
-
-	.head {
-		margin: 7px 0;
-	}
-
-	.hidden {
-		display: none;
-	}
-	</style>
 	<script type="text/javascript">
 		var applicationID = "${grailsApplication.config.facebook.applicationId}";
 		var currentUserId = "${currentUserId}";
 		var applicationRoot = "${grailsApplication.config.grails.serverURL}/faceBook/userInfo/";
 		jQuery(document).ready(function() {
-//			initializeMap();
 			var e = document.createElement('script');
 			e.async = true;
 			e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
@@ -34,7 +17,7 @@
 		});
 		geocoder = getGeoCoder();
 	</script>
-	<g:javascript src="findme.facebook-5.js"/>
+	<g:javascript src="findme.facebook-6.js"/>
 </head>
 <body style="margin:5px;">
 <div id="fb-root" style="display:none"></div>
@@ -57,7 +40,7 @@
 				<input type="button" onclick="showFriendsOnMapByCurrentLocation();" value="${message(code: 'show.by.current.location')}"/>
 				<input type="button" onclick="$('#friendList .head').next().hide();" value="${message(code: 'collapse.all')}"/>
 				<input type="button" onclick="$('#friendList .head').next().show();" value="${message(code: 'expand.all')}"/>
-				<input type="button" onclick="showArrow('${currentUserId}');" value="Show Arrow connection(From Home)"/>
+				<input type="button" onclick="showGoogleMapLineConnections();" value="Show Arrow connection(From Home)"/>
 			</div>
 		</td>
 	</tr>

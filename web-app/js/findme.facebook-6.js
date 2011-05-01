@@ -2,33 +2,84 @@ var googleMap;
 var geoCoder;
 var applicationID;
 var currentUserId;
+var applicationRoot;
 var regionWiseUsers = new Object();
 var friendList;
 var mapMarkerAndInfoWindows = new Array();
-var noAddress = "No Address";
-var cachedAddress = new Array();
-var arrows = new Array();
+var cachedAddressSearches = new Array();
+var googleLineObjects = new Array();
+var NO_ADDRESS = "No Address";
+var NOT_SEARCHED = "Not Searched";
+var SUCCESS = "Success";
+var FAILED = "Failed";
+var MAX_ALLOWED_SEARCH_ATTEMPT = 4;
+function printLog(objectToLog) {
+/*
+		if (console && console.log != undefined) {
+				console.log(objectToLog);
+		}
+*/
+}
 function findAddressFromCache(address) {
-		for (var k in cachedAddress) {
-				if (cachedAddress[k].address == address) {
-						return cachedAddress[k].position;
+		for (var k in cachedAddressSearches) {
+				if (cachedAddressSearches[k].address == address) {
+						return cachedAddressSearches[k].position;
 				}
 		}
 		return null;
 }
+function numberOfValidRegions() {
+		var totalRegions = 0;
+		for (var region in regionWiseUsers) {
+				if (!(region == NO_ADDRESS || regionWiseUsers[region].searchStatus == FAILED)) {
+						totalRegions++;
+				}
+		}
+		return totalRegions;
+}
+function numberOfFailedSearches() {
+		var totalRegions = 0;
+		for (var region in regionWiseUsers) {
+				if (regionWiseUsers[region].searchStatus == FAILED) {
+						totalRegions++;
+				}
+		}
+		return totalRegions;
+}
+function setAddressSearchStatus(address, newStatus) {
+		for (var region in regionWiseUsers) {
+				if (region == address)
+						regionWiseUsers[region].searchStatus = newStatus;
+		}
+}
 function clearMap() {
+		removeAllLines();
 		jQuery(mapMarkerAndInfoWindows).each(function() {
 				if (this.marker) this.marker.setMap(null);
 				if (this.infoWindow) this.infoWindow = null;
 		});
 		mapMarkerAndInfoWindows = new Array();
 }
-function getRegionString(address) {
-		return address ? address.city + " " + address.state + " " + address.country : noAddress;
+function getRegionString(addressToSearch) {
+		var addressToReturn = NO_ADDRESS;
+		if (addressToSearch) {
+				if (addressToSearch.city) {
+						addressToReturn = addressToSearch.city;
+				}
+				if (addressToSearch.state) {
+						addressToReturn += (" " + addressToSearch.state);
+				}
+				if (addressToSearch.country) {
+						addressToReturn += (" " + addressToSearch.country);
+				}
+		}
+		return addressToReturn;
 }
-function addToState(userItem, regionString) {
+function addToState(index, userItem, regionString) {
 		if (!regionWiseUsers[regionString]) {
 				regionWiseUsers[regionString] = new Object();
+				regionWiseUsers[regionString].index = index;
+				regionWiseUsers[regionString].searchStatus = NOT_SEARCHED;
 				regionWiseUsers[regionString].name = regionString;
 				regionWiseUsers[regionString].users = new Array();
 		}
@@ -76,8 +127,8 @@ window.fbAsyncInit = function() {
 		},
 				function(response) {
 						if (response.error_msg) {
-								jQuery('#friendList').append(getHeaderHtml(response.error_msg));
-								return;
+								var message = "<h3>" + getHeaderHtml(response.error_msg) + "<a href='" + applicationRoot + "'>Reload</a></h3>";
+								jQuery('#friendList').html(message);
 						} else {
 								friendList = response;
 								showFriendsOnMapByHomeLocation();
@@ -87,9 +138,10 @@ window.fbAsyncInit = function() {
 function showFriendsOnMapByHomeLocation() {
 		if (friendList) {
 				regionWiseUsers = new Object();
+				var index = 0;
 				jQuery(friendList).each(function() {
 						var regionString = getRegionString(this.hometown_location);
-						addToState(this, regionString);
+						addToState(index++, this, regionString);
 				});
 				showFriendsOnMap(regionWiseUsers);
 		}
@@ -97,55 +149,73 @@ function showFriendsOnMapByHomeLocation() {
 function showFriendsOnMapByCurrentLocation() {
 		if (friendList) {
 				regionWiseUsers = new Object();
+				var index = 0;
 				jQuery(friendList).each(function() {
 						var regionString = getRegionString(this.current_location);
-						addToState(this, regionString);
+						addToState(index++, this, regionString);
 				});
 				showFriendsOnMap(regionWiseUsers);
 		}
 }
 function showFriendsOnMap(regionWiseUsers) {
 		clearMap();
-		removeAllLines();
 		var divHtml = "";
-		for (var index in regionWiseUsers) {
-				divHtml += getRegionHeaderHtml(regionWiseUsers[index]);
+		for (var counter in regionWiseUsers) {
+				divHtml += getRegionHeaderHtml(regionWiseUsers[counter]);
 				divHtml += "<div class='hidden'>";
-				var popupHtml = "<div style='height:210px; width:200px'><h3>" + regionWiseUsers[index].name + "</h3><br/><ul>";
-				jQuery(regionWiseUsers[index].users).each(function(key, userItem) {
+				var popupHtml = "<div style='height:210px; width:200px'><h3>" + regionWiseUsers[counter].name + "</h3><br/><ul>";
+				jQuery(regionWiseUsers[counter].users).each(function(key, userItem) {
 						divHtml += getUserDetailListHtml(userItem);
 						popupHtml += "<li style='list-style:none;'>" +
 								"<a href='" + applicationRoot + "'" + userItem.uid + "'><img src='" + userItem.pic_small + "' alt='" + userItem.name + " Picture'/></a>" + userItem.name +
 								"</li>";
 				});
 				popupHtml += "</div></ul>";
-				searchAddress(regionWiseUsers[index].name, popupHtml);
+				searchAddress(regionWiseUsers[counter].name, popupHtml, MAX_ALLOWED_SEARCH_ATTEMPT);
 				divHtml += "</div>";
 		}
 		jQuery('#friendList').empty().append(divHtml);
 		applyAccordion();
 }
-function initializeMap() {
-		var myLatlng = new google.maps.LatLng(-34.397, 150.644);
-		var myOptions = {
-				zoom: 8,
-				center: myLatlng,
-				mapTypeId: google.maps.MapTypeId.ROADMAP
-		};
-		googleMap = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-		geocoder = new google.maps.Geocoder();
+function checkAndFitBoundary() {
+		if (mapMarkerAndInfoWindows.length == numberOfValidRegions()) {
+				printLog("All Locations have been searched. Failed searches : " + numberOfFailedSearches());
+				var bounds = new google.maps.LatLngBounds();
+				for (marker in mapMarkerAndInfoWindows) {
+						bounds.extend(mapMarkerAndInfoWindows[marker].marker.getPosition());
+				}
+				if (!bounds.isEmpty()) {
+						googleMap.fitBounds(bounds);
+				}
+		}
 }
-function searchAddress(address, content) {
-		if (address.length && geocoder && address != noAddress) {
+function searchAddress(address, content, maxAttempt) {
+		if (address.length && geocoder && address != NO_ADDRESS) {
 				var foundLocation = findAddressFromCache(address);
 				if (foundLocation != null) {
 						createMarkerAndInfoWindowForLocation(foundLocation, content, googleMap);
+						setAddressSearchStatus(address, SUCCESS);
 				} else {
 						geocoder.geocode({ 'address': address}, function(results, status) {
 								if (status == google.maps.GeocoderStatus.OK) {
 										foundLocation = results[0].geometry.location;
-										cachedAddress.push({address:address, position:foundLocation});
+										cachedAddressSearches.push({address:address, position:foundLocation});
 										createMarkerAndInfoWindowForLocation(foundLocation, content, googleMap);
+										setAddressSearchStatus(address, SUCCESS);
+								} else if (status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+										printLog("Query limit reached for address :" + address + ". Sleeping for 2sec. Remaining attempts : " + maxAttempt);
+										if (maxAttempt > 0) {
+												window.setTimeout(
+														function() {
+																searchAddress(address, content, --maxAttempt);
+														}, 2000);
+										} else {
+												printLog("Giving up search for address : " + address)
+												setAddressSearchStatus(address, FAILED);
+										}
+								} else {//if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
+										printLog("address not found for : " + address + ", Status : " + status);
+										setAddressSearchStatus(address, FAILED);
 								}
 						});
 				}
@@ -168,9 +238,8 @@ function createMarkerAndInfoWindowForLocation(location, content, map, icon) {
 		google.maps.event.addListener(marker, 'click', function() {
 				infoWindow.open(map, marker);
 		});
-//			googleMap.setCenter(marker.getPosition());
-		googleMap.fitBounds(googleMap.getBounds().extend(location));
 		mapMarkerAndInfoWindows.push({marker:marker, infoWindow:infoWindow});
+		checkAndFitBoundary();
 }
 function applyAccordion() {
 		$('#friendList .head').unbind('click');
@@ -183,30 +252,40 @@ function updateHomeLocation(event, data) {
 		googleMap.fitBounds(data.geometry.bounds);
 }
 function removeAllLines() {
-		for (var arrow in arrows) {
-				arrows[arrow].setMap(null);
+		for (var arrow in googleLineObjects) {
+				googleLineObjects[arrow].setMap(null);
 		}
-		arrows = new Array();
+		googleLineObjects = new Array();
 }
-function showArrow(currentUserId) {
+function showGoogleMapLineConnections() {
 		removeAllLines();
-		jQuery(friendList).each(function() {
-				if (this.uid == currentUserId) {
-						var foundLocation = findAddressFromCache(getRegionString(this.hometown_location));
-						jQuery(cachedAddress).each(function() {
-								var endPosition = this.position;
-								if (endPosition != foundLocation) {
-										var linePath = new google.maps.Polyline({
-												path: [foundLocation, endPosition],
-												strokeColor: "#FF0000",
-												strokeOpacity: 1.0,
-												strokeWeight: 2
-										});
-										linePath.setMap(googleMap);
-										arrows.push(linePath);
+		for (var friend in friendList) {
+				if (friendList[friend].uid == currentUserId) {
+						var foundLocation = findAddressFromCache(getRegionString(friendList[friend].hometown_location));
+						for (region in regionWiseUsers) {
+								if (region != NO_ADDRESS && regionWiseUsers[region].seachAddress != FAILED) {
+										checkAndShowGoogleMapLine(foundLocation, region);
 								}
-						})
+						}
+						return;
 				}
-				return;
-		});
+		}
+}
+function checkAndShowGoogleMapLine(startPosition, endRegion) {
+		var endPosition = null;
+		for (var k in cachedAddressSearches) {
+				if (cachedAddressSearches[k].address == endRegion) {
+						endPosition = cachedAddressSearches[k].position;
+				}
+		}
+		if (startPosition && endPosition && endPosition != startPosition) {
+				var linePath = new google.maps.Polyline({
+						path: [startPosition, endPosition],
+						strokeColor: "#FF0000",
+						strokeOpacity: 1.0,
+						strokeWeight: 2
+				});
+				linePath.setMap(googleMap);
+				googleLineObjects.push(linePath);
+		}
 }
