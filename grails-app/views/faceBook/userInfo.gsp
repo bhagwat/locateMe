@@ -22,8 +22,8 @@
 	}
 	</style>
 	<script type="text/javascript">
-		var applicationID = "${applicationID}";
-		var currentUserId = "${loggedInUserId}";
+		var applicationID = "${grailsApplication.config.facebook.applicationId}";
+		var currentUserId = "${currentUserId}";
 		var applicationRoot = "${grailsApplication.config.grails.serverURL}/faceBook/userInfo/";
 		jQuery(document).ready(function() {
 //			initializeMap();
@@ -33,14 +33,13 @@
 			document.getElementById('fb-root').appendChild(e);
 		});
 		geocoder = getGeoCoder();
-
 	</script>
 	<g:javascript src="findme.facebook-5.js"/>
 </head>
 <body style="margin:5px;">
 <div id="fb-root" style="display:none"></div>
 <div id="login-flow">
-	<fb:login-button perms="${permissions}" show-faces="true"></fb:login-button>
+	<fb:login-button perms="${grailsApplication.config.facebook.permissions}" show-faces="true"></fb:login-button>
 </div>
 <table>
 	<tr>
@@ -77,7 +76,6 @@
 		<td>
 			<div id="friend-count"></div>
 			<div id="friendList" style="width: 600px; height: 400px;overflow:auto;">
-
 			</div>
 		</td>
 	</tr>

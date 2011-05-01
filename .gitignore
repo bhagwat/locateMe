@@ -6,7 +6,9 @@ grails-app/views/pdf/
 .idea
 web-app/js/prototype
 web-app/data
+web-app/plugins
 web-app/WEB-INF/classes
+web-app/WEB-INF/plugins
 logs/
 out/
 stacktrace.log
