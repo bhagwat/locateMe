@@ -1,8 +1,8 @@
 var googleMap;
-var geoCoder;
 var applicationID;
 var currentUserId;
 var applicationRoot;
+var applicationServerUrl;
 var regionWiseUsers = new Object();
 var friendList;
 var mapMarkerAndInfoWindows = new Array();
@@ -102,7 +102,7 @@ function getHeaderHtml(text) {
 		return "<h3 class='head'><a href='#'>" + text + "</a></h3>";
 }
 function getRegionHeaderHtml(regionItem) {
-		return getHeaderHtml(regionItem.name + " (Total: " + regionItem.users.length + " Friends)");
+		return getHeaderHtml(regionItem.name + " : " + regionItem.users.length + " Friends");
 }
 
 function friendTdFbApi(friendId, friendName, friendGender, friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline) {
@@ -115,25 +115,6 @@ function friendTdFbApi(friendId, friendName, friendGender, friendBirthday, homet
 				"<li>" + currentLocation + "</li>" +
 				"</ul>";
 }
-window.fbAsyncInit = function() {
-		FB.init({appId: applicationID, status: true, cookie: true,
-				xfbml: true});
-		FB.api(
-		{
-				method: "fql.query",
-				query: "SELECT uid, name,sex, pic_small, birthday, hometown_location, current_location FROM user WHERE uid = " + currentUserId +
-						" OR uid IN (SELECT uid2 FROM friend WHERE uid1 =" + currentUserId + ")"
-		},
-				function(response) {
-						if (response.error_msg) {
-								var message = "<h3>" + getHeaderHtml(response.error_msg) + "<a href='" + applicationRoot + "'>Reload</a></h3>";
-								jQuery('#friendList').html(message);
-						} else {
-								friendList = response;
-								showFriendsOnMapBySelectedLocation();
-						}
-				})
-};
 function showFriendsOnMapBySelectedLocation() {
 		if (friendList) {
 				regionWiseUsers = new Object();
@@ -162,7 +143,7 @@ function showFriendsOnMap(regionWiseUsers) {
 				searchAddress(regionWiseUsers[counter].name, popupHtml, MAX_ALLOWED_SEARCH_ATTEMPT);
 				divHtml += "</div>";
 		}
-		jQuery('#friendList').empty().append(divHtml);
+		jQuery('#friendList').html(divHtml);
 		applyAccordion();
 }
 function checkAndFitBoundary() {
@@ -178,6 +159,7 @@ function checkAndFitBoundary() {
 		}
 }
 function searchAddress(address, content, maxAttempt) {
+		var geocoder = getGeoCoder();
 		if (address.length && geocoder && address != NO_ADDRESS) {
 				var foundLocation = findAddressFromCache(address);
 				if (foundLocation != null) {
@@ -266,19 +248,65 @@ function checkAndShowGoogleMapLine(startPosition, endRegion) {
 						endPosition = cachedAddressSearches[k].position;
 				}
 		}
-		if (startPosition && endPosition && endPosition != startPosition) {
-				var linePath = new google.maps.Polyline({
-						path: [startPosition, endPosition],
-						strokeColor: "#FF0000",
-						strokeOpacity: 1.0,
-						strokeWeight: 2
-				});
-				linePath.setMap(googleMap);
-				googleLineObjects.push(linePath);
+		if (startPosition) {
+				if (endPosition && endPosition != startPosition) {
+						var linePath = new google.maps.Polyline({
+								path: [startPosition, endPosition],
+								strokeColor: "#FF0000",
+								strokeOpacity: 1.0,
+								strokeWeight: 2
+						});
+						linePath.setMap(googleMap);
+						googleLineObjects.push(linePath);
+				}
+		} else {
+				jQuery.flash.warn('Address not set', 'We are unable to find your ' + getLocationType() + ". Possibly you do not have updated this in your facebook profile. Update your location to see connection.")
 		}
+}
+function loadFaceBookFriendDetails() {
+		FB.api(
+		{
+				method: "fql.query",
+				query: "SELECT uid, name,sex, pic_small, birthday, hometown_location, current_location FROM user WHERE uid = " + currentUserId +
+						" OR uid IN (SELECT uid2 FROM friend WHERE uid1 =" + currentUserId + ")"
+		}, function(response) {
+						if (response.error_msg) {
+								jQuery.flash.subtle('Hmm...', "We are unable to load your friend list due to: " + response.error_msg + ". <a href='" + applicationRoot + "'>Click to Reload</a>");
+								var message = "<h3>" + getHeaderHtml(response.error_msg) + "<a href='" + applicationRoot + "'>Reload</a></h3>";
+								jQuery('#friendList').html(message);
+						} else {
+								friendList = response;
+								showFriendsOnMapBySelectedLocation();
+						}
+				}
+				);
+}
+function postOnWall() {
+		var divHtml = "";
+		for (var counter in regionWiseUsers) {
+				if (counter > 5) break;
+				divHtml += regionWiseUsers[counter].name + ": " + regionWiseUsers[counter].users.length + ",\n"
+		}
+		FB.ui(
+		{
+				method: 'feed',
+				name: 'Region wise Friends based on ' + getLocationType(),
+				link: applicationRoot,
+				picture:applicationServerUrl + "/images/find-me-on-google-map-logo.jpg",
+				description: divHtml
+		},
+				function(response) {
+						if (response && response.post_id) {
+								jQuery.flash.success('Success', 'Your region wise friend statistics has been successfully posted on your wall.')
+						} else {
+								jQuery.flash.error('Error', 'Your region wise friend statistics was not posted on your wall.')
+						}
+				}
+				)
 }
 jQuery(document).ready(function() {
 		jQuery('input[name=searchBy]').click(function() {
 				showFriendsOnMapBySelectedLocation();
-		})
-})
+		});
+		loadFaceBookFriendDetails();
+});

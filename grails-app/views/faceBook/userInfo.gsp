@@ -9,18 +9,24 @@
 		var applicationID = "${grailsApplication.config.facebook.applicationId}";
 		var currentUserId = "${currentUserId}";
 		var applicationRoot = "${grailsApplication.config.grails.serverURL}/faceBook/userInfo/";
-		jQuery(document).ready(function() {
-			var e = document.createElement('script');
-			e.async = true;
-			e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
-			document.getElementById('fb-root').appendChild(e);
-		});
-		geocoder = getGeoCoder();
+		var applicationServerUrl = "${grailsApplication.config.grails.serverURL}";
 	</script>
 	<g:javascript src="findme.facebook-7.js"/>
+	<g:javascript src="jquery.flash.js"/>
 </head>
 <body style="margin:5px;">
-<div id="fb-root" style="display:none"></div>
+<div id="fb-root"></div>
+<script type="text/javascript" src="http://connect.facebook.net/en_US/all.js"></script>
+<script type="text/javascript">
+	FB.init({
+		appId: applicationID,
+		status: true,
+		cookie: true,
+		xfbml: true,
+		channelUrl  : "${grailsApplication.config.grails.serverURL}/channel.html"  // custom channel
+	});
+</script>
+<div id="flash"></div>
 <div id="login-flow">
 	<fb:login-button perms="${grailsApplication.config.facebook.permissions}" show-faces="true"></fb:login-button>
 </div>
@@ -41,7 +47,8 @@
 				<g:radio value="current_location" name="searchBy"/>Current town
 				<input type="button" onclick="$('#friendList .head').next().hide();" value="${message(code: 'collapse.all')}"/>
 				<input type="button" onclick="$('#friendList .head').next().show();" value="${message(code: 'expand.all')}"/>
-				<input type="button" onclick="showGoogleMapLineConnections();" value="Show Arrow connection(From Home)"/>
+				<input type="button" onclick="showGoogleMapLineConnections();" value="Connect line"/>
+				<input type="button" onclick="postOnWall();" value="Post on wall"/>
 			</div>
 		</td>
 	</tr>

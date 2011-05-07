@@ -48,6 +48,9 @@ class FaceBookController {
 				currentUserId: currentUserId,
 		]
 	}
+	def test={
+		[loggedInUserId:getUserId()]
+	}
 
 	private String getFacebookAuthorizeUrl() {
 		return grailsApplication.config.facebook.oauthUrl + "?" +
