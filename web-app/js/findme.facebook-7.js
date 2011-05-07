@@ -14,11 +14,11 @@ var SUCCESS = "Success";
 var FAILED = "Failed";
 var MAX_ALLOWED_SEARCH_ATTEMPT = 4;
 function printLog(objectToLog) {
-/*
-		if (console && console.log != undefined) {
-				console.log(objectToLog);
-		}
-*/
+//			 if (console && console.log != undefined) { console.log(objectToLog); }
+}
+function getLocationType() {
+		var locationType = jQuery('input[name=searchBy]:checked').val();
+		return locationType.length ? locationType : 'hometown_location';
 }
 function findAddressFromCache(address) {
 		for (var k in cachedAddressSearches) {
@@ -91,12 +91,11 @@ function getUserDetailListHtml(userItem) {
 		friendName = userItem.name;
 		friendGender = userItem.sex;
 		friendBirthday = userItem.birthday;
-		hometown = getRegionString(userItem.hometown_location);
+		hometown = getRegionString(userItem[getLocationType()]);
 		currentLocation = getRegionString(userItem.current_location);
 		friendLink = "";
 		friendPicture = userItem.pic_small;
 		friendOnline = userItem.online_presence ? userItem.online_presence : '';
-//				jQuery('#friendList').append(friendTdFbApi(friendId, friendName, friendGender, friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline));
 		return friendTdFbApi(friendId, friendName, friendGender, friendBirthday, hometown, currentLocation, friendLink, friendPicture, friendOnline);
 }
 function getHeaderHtml(text) {
@@ -131,27 +130,16 @@ window.fbAsyncInit = function() {
 								jQuery('#friendList').html(message);
 						} else {
 								friendList = response;
-								showFriendsOnMapByHomeLocation();
+								showFriendsOnMapBySelectedLocation();
 						}
 				})
 };
-function showFriendsOnMapByHomeLocation() {
+function showFriendsOnMapBySelectedLocation() {
 		if (friendList) {
 				regionWiseUsers = new Object();
 				var index = 0;
 				jQuery(friendList).each(function() {
-						var regionString = getRegionString(this.hometown_location);
-						addToState(index++, this, regionString);
-				});
-				showFriendsOnMap(regionWiseUsers);
-		}
-}
-function showFriendsOnMapByCurrentLocation() {
-		if (friendList) {
-				regionWiseUsers = new Object();
-				var index = 0;
-				jQuery(friendList).each(function() {
-						var regionString = getRegionString(this.current_location);
+						var regionString = getRegionString(this[getLocationType()]);
 						addToState(index++, this, regionString);
 				});
 				showFriendsOnMap(regionWiseUsers);
@@ -261,7 +249,7 @@ function showGoogleMapLineConnections() {
 		removeAllLines();
 		for (var friend in friendList) {
 				if (friendList[friend].uid == currentUserId) {
-						var foundLocation = findAddressFromCache(getRegionString(friendList[friend].hometown_location));
+						var foundLocation = findAddressFromCache(getRegionString(friendList[friend][getLocationType()]));
 						for (region in regionWiseUsers) {
 								if (region != NO_ADDRESS && regionWiseUsers[region].seachAddress != FAILED) {
 										checkAndShowGoogleMapLine(foundLocation, region);
@@ -289,3 +277,8 @@ function checkAndShowGoogleMapLine(startPosition, endRegion) {
 				googleLineObjects.push(linePath);
 		}
 }
+jQuery(document).ready(function() {
+		jQuery('input[name=searchBy]').click(function() {
+				showFriendsOnMapBySelectedLocation();
+		})
+})
