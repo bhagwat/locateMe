@@ -11,7 +11,7 @@
 		var applicationRoot = "${grailsApplication.config.grails.serverURL}/faceBook/userInfo/";
 		var applicationServerUrl = "${grailsApplication.config.grails.serverURL}";
 	</script>
-	<g:javascript src="findme.facebook-7.js"/>
+	<g:javascript src="findme.facebook-8.js"/>
 	<g:javascript src="jquery.flash.js"/>
 </head>
 <body style="margin:5px;">
@@ -25,6 +25,7 @@
 		xfbml: true,
 		channelUrl  : "${grailsApplication.config.grails.serverURL}/channel.html"  // custom channel
 	});
+	FB.Canvas.setAutoResize();
 </script>
 <div id="flash"></div>
 <div id="login-flow">

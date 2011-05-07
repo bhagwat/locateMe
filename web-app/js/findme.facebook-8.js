@@ -3,7 +3,7 @@ var applicationID;
 var currentUserId;
 var applicationRoot;
 var applicationServerUrl;
-var regionWiseUsers = new Object();
+var regionWiseUsers;
 var friendList;
 var mapMarkerAndInfoWindows = new Array();
 var cachedAddressSearches = new Array();
@@ -140,7 +140,8 @@ function showFriendsOnMap(regionWiseUsers) {
 								"</li>";
 				});
 				popupHtml += "</div></ul>";
-				searchAddress(regionWiseUsers[counter].name, popupHtml, MAX_ALLOWED_SEARCH_ATTEMPT);
+//				searchAddress(regionWiseUsers[counter].name, popupHtml, MAX_ALLOWED_SEARCH_ATTEMPT);
+				searchAddress(counter, popupHtml, MAX_ALLOWED_SEARCH_ATTEMPT);
 				divHtml += "</div>";
 		}
 		jQuery('#friendList').html(divHtml);
@@ -158,26 +159,27 @@ function checkAndFitBoundary() {
 				}
 		}
 }
-function searchAddress(address, content, maxAttempt) {
+function searchAddress(counter, content, maxAttempt) {
+		address=regionWiseUsers[counter].name;
 		var geocoder = getGeoCoder();
 		if (address.length && geocoder && address != NO_ADDRESS) {
 				var foundLocation = findAddressFromCache(address);
 				if (foundLocation != null) {
-						createMarkerAndInfoWindowForLocation(foundLocation, content, googleMap);
+						createMarkerAndInfoWindowForLocation(foundLocation, content, googleMap,regionWiseUsers[counter].users[0].pic_small);
 						setAddressSearchStatus(address, SUCCESS);
 				} else {
 						geocoder.geocode({ 'address': address}, function(results, status) {
 								if (status == google.maps.GeocoderStatus.OK) {
 										foundLocation = results[0].geometry.location;
 										cachedAddressSearches.push({address:address, position:foundLocation});
-										createMarkerAndInfoWindowForLocation(foundLocation, content, googleMap);
+										createMarkerAndInfoWindowForLocation(foundLocation, content, googleMap,regionWiseUsers[counter].users[0].pic_small);
 										setAddressSearchStatus(address, SUCCESS);
 								} else if (status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
 										printLog("Query limit reached for address :" + address + ". Sleeping for 2sec. Remaining attempts : " + maxAttempt);
 										if (maxAttempt > 0) {
 												window.setTimeout(
 														function() {
-																searchAddress(address, content, --maxAttempt);
+																searchAddress(counter, content, --maxAttempt);
 														}, 2000);
 										} else {
 												printLog("Giving up search for address : " + address)
