@@ -35,9 +35,9 @@
     <tr>
         <td>
             <h2>
+                Welcome
                 <a href="${createLink(action: 'userInfo', id: loggedInUserId)}">
                     ${userInfo.name}
-                    (<g:message code="go.back.to.home" default="Go Back to Home"/>)
                 </a>
             </h2>
         </td>

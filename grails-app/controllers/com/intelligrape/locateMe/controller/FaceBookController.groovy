@@ -77,9 +77,9 @@ class FaceBookController {
 	}
 
 	private String getUserId() {
-		String token = getFaceBookToken().tokenize("|")[1]
-		String uid = token?.tokenize("-")[1]
-		return uid
+        String urlUserDetailResponseText = getUserDetailUrl("me").toURL().getText('ISO-8859-1')
+        def userDetail = JSON.parse(urlUserDetailResponseText)
+        return userDetail?.id
 	}
 
 	private String getFaceBookToken() {
